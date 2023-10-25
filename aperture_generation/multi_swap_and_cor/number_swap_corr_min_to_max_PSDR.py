@@ -83,9 +83,10 @@ polyfit=yfit(wl)
 line_2=np.full(int(len(upper)/2-len(polyfit)),polyfit[-1])
 corrected_corr=np.append(polyfit,line_2)
 
+N=8
 import scipy.interpolate as interp
 arr1_interp = interp.interp1d(np.arange(corrected_corr.size),corrected_corr)
-corrected_corr = arr1_interp(np.linspace(0,corrected_corr.size-1,256))
+corrected_corr = arr1_interp(np.linspace(0,corrected_corr.size-1,N**2))
 
 # ## change to corr
 corrected_corr=1-corrected_corr
@@ -104,7 +105,7 @@ np.save('corrected_corr.npy',corrected_corr)
 
 # Input parameters
 R=R_unique
-N=8
+#N=8
 num_proc=9
 seed1=1
 seed2=2 
