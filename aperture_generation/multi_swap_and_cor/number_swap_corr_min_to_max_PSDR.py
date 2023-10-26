@@ -7,6 +7,12 @@ import os
 from scipy.stats import mielke
 import matplotlib.pyplot as plt
 import sys
+input_path = os.path.join(os.path.dirname(__file__), '../..')
+sys.path.append(input_path)
+from input_variables import dimension_N
+from input_variables import number_of_processors
+from input_variables import poly_deg
+
 func_path = os.path.join(os.path.dirname(__file__), '../required_functions')
 sys.path.append(func_path)
 from req_functions import correlationValues
@@ -39,7 +45,7 @@ plt.yscale('log')
 plt.xlabel('k')
 plt.ylabel('PSD')
 # plt.savefig('.png', dpi=600, bbox_inches='tight')
-plt.show()
+plt.show(block=False)
 
 ind_max=np.where(PR_r==PR_r[0:-1].max())
 test_line=np.linspace(0,PR_r[ind_max[0][0]],ind_max[0][0])
@@ -50,8 +56,7 @@ plt.xscale('log')
 plt.xlabel('k')
 plt.ylabel('PSDR(k)')
 # plt.savefig('.png', dpi=600, bbox_inches='tight')
-plt.show()
-
+plt.show(block=False)
 
 ## doing matching from min to max
 lamda=((2*np.pi)/kvals_lower)
@@ -67,7 +72,8 @@ wl=wl[0:max_r_index+1]
 logx=np.log(wl)
 logy=np.log(PR_new)
 
-deg=3 #order of polynomial
+# deg=3 #order of polynomial
+deg=poly_deg
 coeffs=np.polyfit(logx,logy,deg=deg)
 poly=np.poly1d(coeffs)
 yfit = lambda wl: np.exp(poly(np.log(wl)))
@@ -77,13 +83,14 @@ plt.xscale('log')
 plt.xlabel('k')
 plt.ylabel('PSDR(k)')
 # plt.savefig('.png', dpi=600, bbox_inches='tight')
-plt.show()
+plt.show(block=False)
 
 polyfit=yfit(wl)
 line_2=np.full(int(len(upper)/2-len(polyfit)),polyfit[-1])
 corrected_corr=np.append(polyfit,line_2)
 
-N=8
+# N=8
+N=dimension_N
 import scipy.interpolate as interp
 arr1_interp = interp.interp1d(np.arange(corrected_corr.size),corrected_corr)
 corrected_corr = arr1_interp(np.linspace(0,corrected_corr.size-1,N**2))
@@ -95,7 +102,8 @@ plt.xscale('log')
 plt.xlabel('k')
 plt.ylabel('Corr(k)')
 # plt.savefig('.png', dpi=600, bbox_inches='tight')
-plt.show()
+plt.show(block=False)
+
 
 R_unique=np.unique(corrected_corr)
 
@@ -106,7 +114,8 @@ np.save('corrected_corr.npy',corrected_corr)
 # Input parameters
 R=R_unique
 #N=8
-num_proc=9
+# num_proc=9
+num_proc=number_of_processors
 seed1=1
 seed2=2 
 n=((2*2**N+1)**2)
@@ -239,7 +248,7 @@ for k in range(len(R)):
 np.save('B.npy',all_B)
 np.save('A.npy', all_A) 
 
-
+plt.show()
 
 
 

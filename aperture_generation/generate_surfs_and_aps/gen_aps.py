@@ -7,6 +7,11 @@ from scipy import signal
 import time
 import os
 import sys
+input_path = os.path.join(os.path.dirname(__file__), '../..')
+sys.path.append(input_path)
+from input_variables import number_of_realisations
+from input_variables import dimension_N
+
 func_path = os.path.join(os.path.dirname(__file__), '../required_functions')
 sys.path.append(func_path)
 from req_functions import psd_data
@@ -19,6 +24,12 @@ from req_functions import calculate_scaling
 from req_functions import calculate_scaling_gen_surf
 from req_functions import calculate_scaling_testing
 
+# from Aperture_generation_repository.input_variables import number_of_realisations
+
+# input_path = '../..'
+# ip=np.load(input_path+'/input_variables.py')
+# sys.path.append(input_path)
+# from input_variables import number_of_realisations
 
 path_to_surface_data='../Pre_processed_data'
 
@@ -70,14 +81,15 @@ aniso_lower_params=aniso_lower_params[0:1][0]
 aniso_upper_params=aniso_upper_params[0:1][0]
 
 ## Generate surfaces and apertures
-seed=np.arange(1,3,1) #iterater
+seed=np.arange(1,number_of_realisations,1) #iterater
 all_aps=[]
 up_surf=[]
 low_surf=[]
 shift1=[]
 
 for i in range(0,len(seed)):
-      N=8
+      # N=8
+      N=dimension_N
       seed_for_rearrange=seed[i]
       print (i)
       S = np.arange((2*2**N+1)**2) 
@@ -112,7 +124,7 @@ for i in range(0,len(seed)):
       # print (average_intercept_upper, rms_heights_upper_surf)
       # rms_heights_upper_surf=calculate_scaling(upper_surf) ## for testing
       upper_surf *= target_rms/rms_heights_upper_surf
-      up_surf.append(upper_surf.flatten())
+      up_surf.append(upper_surf)#.flatten())
 
       #generate lower surface #########################################
       aniso_lower =aniso_lower_params
@@ -124,7 +136,7 @@ for i in range(0,len(seed)):
       # print (average_intercept_lower, rms_heights_lower_surf)
       # rms_heights_lower_surf=calculate_scaling(lower_surf) ## for testing
       lower_surf *= target_rms/rms_heights_lower_surf
-      low_surf.append(lower_surf.flatten())
+      low_surf.append(lower_surf)#.flatten())
       aperture=upper_surf-lower_surf
       ## shift to remove zero    
       shift=np.min(aperture)
@@ -162,7 +174,7 @@ for i in range(0,len(seed)):
           p=(n_zero/aperture.size)*100
           print ('after, gen',p)
 
-      all_aps.append(aperture.flatten())
+      all_aps.append(aperture)#.flatten())
              
 np.save('gen_apertures.npy',all_aps)
 np.save('gen_upper_surf.npy',up_surf)

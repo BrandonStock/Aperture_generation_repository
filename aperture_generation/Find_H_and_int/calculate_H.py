@@ -4,7 +4,6 @@ from scipy.stats import iqr
 import pandas as pd
 import os
 import sys
-# sys.path.append('/home/brandon/Documents/TF10/Task 10.2.2 Delivery v2/ap_gen_upscaling/required_functions')
 func_path = os.path.join(os.path.dirname(__file__), '../required_functions')
 sys.path.append(func_path)
 from req_functions import RMS_COR
