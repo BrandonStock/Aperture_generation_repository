@@ -3,7 +3,7 @@
 ## set working directory
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# calculate H
+# calculate Hurst exponent and scaling parameter
 run_calculate_H=false
 if $run_calculate_H; then
 	cd aperture_generation/Find_H_and_int
@@ -17,7 +17,7 @@ else
 	echo Run_calculate_H is false
 fi
 
-# swapping algorithm
+# number swapping algorithm for correlation
 run_number_swap=false
 if $run_number_swap; then
 	cd aperture_generation/multi_swap_and_cor
@@ -31,7 +31,7 @@ else
 	echo Run_number_swap is false
 fi
 
-# generate aps
+# generate apertures
 run_gen_aps=true
 if $run_gen_aps; then
 	cd aperture_generation/generate_surfs_and_aps # for testing
