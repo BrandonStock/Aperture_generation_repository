@@ -1,14 +1,14 @@
 # aperture_generation
 
-***
-
-A python code for generating synthetic rock fracture aperture based on the upper and lower surface scans of natural rock fractures
+A python code for generating synthetic rock fracture apertures using self-affine conepts and information obtained from upper and lower surface scans of natural rock fractures
 
 ***
-## To run
+## To run code
+Pre processed surfaces must be named upper.npy and lower.npy (.npy file format) and placed in /aperture_generation/Pre_processed_data directory.
 
-Pre processed surfaces must be called upper and lower and saved in .npy format and placed in directory /aperture_generation/Pre_processed_data. 
-Aperture generation code, key input parameters for executing number swapping algorithm and generating apertures can be altered in input_variables.py
-run_ap_gen.sh executes all the required codes, can turn some key methods to false if number swapping or calculating Hurst has already been run.
-number swapping is only required once for one fracture, if new surface scans are used it should be run again
-generated apertures and surfaces found in /aperture_generation/generate_surfs_and_aps/.
+input_variables.py file is used to define number of realisations, resolution, number of processors and the method for extracting Hurst exponent.
+
+run_ap_gen.sh executes all the required scripts. Turn options to false if not required, for example number_swapping only needs to be run once for one set of input fracture surfaces.
+
+generated apertures and surfaces are found in /aperture_generation/generate_surfs_and_aps directory
+
