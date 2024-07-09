@@ -4,7 +4,6 @@ import random
 import scipy.stats as stats
 import multiprocessing as mp
 import os
-from scipy.stats import mielke
 import matplotlib.pyplot as plt
 import sys
 input_path = os.path.join(os.path.dirname(__file__), '../..')
@@ -15,9 +14,7 @@ from input_variables import poly_deg
 
 func_path = os.path.join(os.path.dirname(__file__), '../required_functions')
 sys.path.append(func_path)
-from req_functions import correlationValues
 from req_functions import psd_data
-from req_functions import solve_R
 
 ##path to pre processed surface data
 path_to_surface_data='../Pre_processed_data'
@@ -93,7 +90,7 @@ corrected_corr=np.append(polyfit,line_2)
 N=dimension_N
 import scipy.interpolate as interp
 arr1_interp = interp.interp1d(np.arange(corrected_corr.size),corrected_corr)
-corrected_corr = arr1_interp(np.linspace(0,corrected_corr.size-1,N**2))
+corrected_corr = arr1_interp(np.linspace(0,corrected_corr.size-1,2**N))
 
 # ## change to corr
 corrected_corr=1-corrected_corr
@@ -104,12 +101,10 @@ plt.ylabel('Corr(k)')
 # plt.savefig('.png', dpi=600, bbox_inches='tight')
 plt.show(block=False)
 
-
 R_unique=np.unique(corrected_corr)
 
 np.save('R_unique.npy',R_unique)
 np.save('corrected_corr.npy',corrected_corr)
-
 
 # Input parameters
 R=R_unique
@@ -118,7 +113,8 @@ R=R_unique
 num_proc=number_of_processors
 seed1=1
 seed2=2 
-n=((2*2**N+1)**2)
+n=((2*2**N+1)**2) # original
+# n=(2*2**N+1)*20
 
 ## input random number sequences A and B
 np.random.seed(seed1)
@@ -140,7 +136,8 @@ for k in range(len(R)):
     tol=0.001
     
     # length of the array
-    n=((2*2**N+1)**2)
+    n=((2*2**N+1)**2) # original
+    # n=(2*2**N+1)*20
     n = n + (n%num_proc) # always keep this, makes sure we can reshape array to divide it over processes
     
     # function that checks whether to swap based on chosen pairs, withoot calculating correlation over full array256
@@ -246,8 +243,7 @@ for k in range(len(R)):
         all_A.append(A)
         
 np.save('B.npy',all_B)
-np.save('A.npy', all_A) 
-
+np.save('A.npy', all_A)
 plt.show()
 
 

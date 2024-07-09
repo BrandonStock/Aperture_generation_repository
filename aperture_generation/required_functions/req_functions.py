@@ -34,7 +34,9 @@ def RMS_COR(trace, plot=None):
         
         ## However Marsch 2021 states 10% of max is better, removes first dents in sigma(dh) vs dv plot
         step=[]
-        step[:]=[x for x in steps if x < (0.1*nofData)]  
+        #step[:]=[x for x in steps if x < (0.2*nofData)] 
+        step[:]=[x for x in steps if x < (0.1*nofData)] 
+        #step[:]=[x for x in steps if x < (0.05*nofData)]  
         steps=np.asarray(step) 
         
         'Calculate the std og height differences for the different step sizes, eq 5-4'        
@@ -662,6 +664,32 @@ def calculate_scaling_gen_surf(surface_real,surface_gen):
     
     return med_int_surface
 
+    # x_length = surface_gen.shape[1]
+    # y_length = surface_gen.shape[0]
+
+    # # Calculate scaling factors for x and y directions
+    # H_x, int_x = [], []
+    # for i in range(y_length):
+    #     t = surface_gen[i].reshape(-1, 1)
+    #     h, intercept, std = RMS_COR(t)
+    #     H_x.append(h)
+    #     intercept = intercept * (len(surface_real) ** 2 / len(surface_gen) ** 2)
+    #     int_x.append(intercept)
+
+    # H_y, int_y = [], []
+    # for i in range(x_length):
+    #     t = surface_gen[:, i].reshape(-1, 1)
+    #     h, intercept, std = RMS_COR(t)
+    #     H_y.append(h)
+    #     intercept = intercept * (len(surface_real) ** 2 / len(surface_gen) ** 2)
+    #     int_y.append(intercept)
+
+    # # Calculate median of intercepts
+    # int_surface_all_array = int_x + int_y
+    # med_int_surface = np.median(int_surface_all_array)
+
+    # return med_int_surface
+
 def calculate_scaling_testing(surface):
     '''
     Function using RMS-COR to calculate intercept, scaling parameters, from surface so can be used for rescaling in 
@@ -729,3 +757,189 @@ def calculate_scaling(surface):
     med_int_surface=np.median(int_surface_all_array)
     
     return med_int_surface
+    
+    
+# def FFT_H_int_all_traces_one_plot(trace_in):
+#     from scipy import signal
+#     trace=signal.detrend(trace_in,axis=0)
+#     narray=trace.shape[0]
+#     trace=trace.flatten()
+#     kbins = np.arange(0.5, narray//2+1, 1.) #Integer k value bins
+#     kvals = 0.5 * (kbins[1:] + kbins[:-1])
+#     Pxx,freqs=plt.psd(trace, NFFT=narray-1)
+#     plt.close()
+#     return kvals,Pxx
+
+# def calculate_scaling_gen_surf_PSD(surface_real, surface_gen):   
+#     '''
+#     Function using fourier power spectrum to calculate intercept, scaling parameters, from surface so can be used for rescaling in 
+#     generation code, this is used for correctly rescaling surfaces
+    
+#     '''
+#     from scipy import stats
+#     x_length=len(surface_gen[1,:])
+#     y_length=len(surface_gen[:,1])
+    
+#     # x
+#     lower_kvals_x=[]
+#     lower_Pxx_x=[]
+#     for i in range(x_length):
+#         # print (i)
+#         t=surface_gen[i,:].reshape(x_length,1)
+#         x,y=FFT_H_int_all_traces_one_plot(t)
+#         lower_kvals_x.append(x)
+#         lower_Pxx_x.append(y) 
+#     # y
+#     lower_kvals_y=[]
+#     lower_Pxx_y=[]
+#     for i in range(y_length):
+#         t=surface_gen[:,i].reshape(y_length,1)
+#         x,y=FFT_H_int_all_traces_one_plot(t)
+#         lower_kvals_y.append(x)
+#         lower_Pxx_y.append(y)
+    
+#     Px=lower_Pxx_x   
+#     kvals=lower_kvals_x  
+#     Px_y=lower_Pxx_y 
+    
+#     ## calculate comboned Px
+#     comb_px=np.vstack((Px, Px_y))
+    
+#     ## calculate mean
+#     Px=np.mean(comb_px, axis=0)
+    
+#     kvals=kvals[0]
+    
+#     vals_to_remove=1
+#     init_rem=2
+#     # ## remove values from array
+#     # Px_mean_no_first=Px[init_rem:-vals_to_remove]
+#     # kvals_mean_no_last=kvals[:-(vals_to_remove+init_rem)]
+#     # res = stats.linregress(np.log10(kvals_mean_no_last),np.log10(Px_mean_no_first))
+#     # slope=res.slope
+#     # c=10**res.intercept
+#     # H_out=(slope+1)/-2
+#     # K=kvals_mean_no_last #kvals_no_last , change to kvals_flat_no_last for means #flat_kvals #x[:-1] 
+#     # N=(len(kvals_mean_no_last)*2)# or maybe len(kvals)*2
+#     # a=((2*np.sqrt(2))/N) * np.sqrt(c)
+#     # N=(N/2)-1 #len(trace_in)
+#     # b=np.sqrt(np.sum((K**-(H_out+1/2))*(np.sin(np.pi*(K/N))))**2)
+#     # std_h=a*b
+    
+#     # remove_vals=np.arange(1,200) ## 900
+#     # Hs=[]
+#     # Sps=[]
+#     # for i in range (len(remove_vals)):
+#     #     x=kvals[:-(remove_vals[i]+init_rem)]
+#     #     y=Px[init_rem:-remove_vals[i]]
+#     #     res = stats.linregress(np.log10(x),np.log10(y))
+#     #     slope=res.slope
+#     #     c=10**res.intercept
+#     #     H_out=(slope+1)/-2
+#     #     K=x 
+#     #     N=(len(x)*2)
+#     #     a=((2*np.sqrt(2))/N) * np.sqrt(c)
+#     #     N=(N/2)-1 
+#     #     b=np.sqrt(np.sum((K**-(H_out+1/2))*(np.sin(np.pi*(K/N))))**2)
+#     #     std_h=a*b
+        
+#     #     Hs.append(H_out)
+#     #     Sps.append(std_h)
+    
+#     # Sps=np.asarray(Sps)
+#     # Hs=np.asarray(Hs)
+    
+#     # idx = np.where(Hs==np.max(Hs))
+    
+#     # vals_to_remove=idx[0][0]+1
+#     ## remove values from array
+#     Px_mean_no_first=Px[init_rem:-vals_to_remove]
+#     kvals_mean_no_last=kvals[:-(vals_to_remove+init_rem)]
+    
+#     # coefficients=np.polyfit(np.log10(kvals_mean_no_last),np.log10(Px_mean_no_first),1) #added
+#     # res = stats.linregress(np.log10(kvals_mean_no_last),np.log10(Px_mean_no_first))#added
+#     # polynomial=np.poly1d(coefficients)#added
+#     # log10_x_fit=polynomial(np.log10(kvals_mean_no_last))#added
+    
+#     res = stats.linregress(np.log10(kvals_mean_no_last),np.log10(Px_mean_no_first)) ## original
+#     slope=res.slope
+#     c=10**res.intercept
+#     H_out=(slope+1)/-2
+#     K=kvals_mean_no_last #kvals_no_last , change to kvals_flat_no_last for means #flat_kvals #x[:-1] 
+#     N=(len(kvals_mean_no_last)*2)# or maybe len(kvals)*2
+#     a=((2*np.sqrt(2))/N) * np.sqrt(c)
+#     N=(N/2)-1 
+#     b=np.sqrt(np.sum((K**-(H_out+1/2))*(np.sin(np.pi*(K/N))))**2)
+#     std_h=a*b
+    
+    
+#     # plt.loglog(kvals_mean_no_last,10**log10_x_fit,color='r', label='best fit')
+#     # # plt.plot(x,y_fit,label='infered slope')
+#     # plt.plot([],[],' ',label='slope = %s'% float('%.3g' % slope))
+#     # plt.plot([],[],' ',label='H = %s'% float('%.3g' % H_out))
+#     # plt.plot([],[],' ',label='intercept = %s'% float('%.3g' % c))
+#     # plt.plot([],[],' ',label='Sp = %s'% float('%.3g' % std_h))
+#     # plt.plot(kvals_mean_no_last,Px_mean_no_first, marker='.', color='C0')
+#     # plt.xscale('log')
+#     # plt.yscale('log')
+#     # plt.ylabel('PSD')
+#     # plt.xlabel('Wavenumber')
+#     # plt.legend()
+#     # # plt.savefig('FFT_comb_prof/lower_mean_of_ind_profs_maxH.png', dpi=600, bbox_inches='tight')
+#     # plt.show()
+    
+#     intercep=std_h*(len(surface_real)**2/len(surface_gen)**2)
+#     return intercep
+
+from matplotlib import mlab
+from scipy import signal, stats
+
+def FFT_H_int_all_traces_one_plot(trace_in):
+    trace = signal.detrend(trace_in, axis=0)
+    narray = trace.shape[0]
+    trace = trace.flatten()
+    Pxx, _ = mlab.psd(trace, NFFT=narray-1)
+    kvals = np.arange(1, narray // 2 + 1)
+    return kvals, Pxx
+
+def calculate_scaling_gen_surf_PSD(surface_real, surface_gen):
+    x_length, y_length = surface_gen.shape
+
+    def process_traces(traces, length):
+        lower_kvals = []
+        lower_Pxx = []
+        for i in range(length):
+            t = traces[i, :].reshape(length, 1)
+            x, y = FFT_H_int_all_traces_one_plot(t)
+            lower_kvals.append(x)
+            lower_Pxx.append(y)
+        return lower_kvals, lower_Pxx
+
+    lower_kvals_x, lower_Pxx_x = process_traces(surface_gen, x_length)
+    lower_kvals_y, lower_Pxx_y = process_traces(surface_gen.T, y_length)
+
+    comb_px = np.vstack((lower_Pxx_x, lower_Pxx_y))
+    Px = np.mean(comb_px, axis=0)
+    kvals = lower_kvals_x[0]
+
+    vals_to_remove = 1
+    init_rem = 2
+
+    Px_mean_no_first = Px[init_rem:-vals_to_remove]
+    kvals_mean_no_last = kvals[:-(vals_to_remove + init_rem)]
+
+    log_kvals = np.log10(kvals_mean_no_last)
+    log_Px = np.log10(Px_mean_no_first)
+    res = stats.linregress(log_kvals, log_Px)
+
+    slope = res.slope
+    c = 10**res.intercept
+    H_out = (slope + 1) / -2
+    K = kvals_mean_no_last
+    N = (len(kvals_mean_no_last) * 2)
+    a = ((2 * np.sqrt(2)) / N) * np.sqrt(c)
+    N = (N / 2) - 1
+    b = np.sqrt(np.sum((K**-(H_out + 0.5)) * np.sin(np.pi * (K / N)))**2)
+    std_h = a * b
+    intercep = std_h * (len(surface_real)**2 / len(surface_gen)**2)
+    return intercep

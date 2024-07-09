@@ -1,14 +1,22 @@
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import scipy.stats as stats
-from scipy.stats.mstats import gmean
-from scipy import signal
-import time
 import os
 import sys
 input_path = os.path.join(os.path.dirname(__file__), '../..')
 sys.path.append(input_path)
+
+# Import the configuration
+config = {}
+with open(input_path+'/input_variables.py') as f:
+    exec(f.read(), config)
+
+# Determine which method is set to True
+methods = ['calc_H_PSD_filtered', 'calc_H_PSD_unfiltered', 'calc_H_PSD_full_surf_filtered', 'calc_H_PSD_full_surf_unfiltered', 'calc_H_RMS_COR', 'calc_H_RMS_COR_comb_profs']
+selected_method = None
+for method in methods:
+    if config.get(method, False):
+        selected_method = method
+        break
+    
 from input_variables import number_of_realisations
 from input_variables import dimension_N
 
@@ -23,13 +31,8 @@ from req_functions import correlationValues
 from req_functions import calculate_scaling 
 from req_functions import calculate_scaling_gen_surf
 from req_functions import calculate_scaling_testing
+from req_functions import calculate_scaling_gen_surf_PSD
 
-# from Aperture_generation_repository.input_variables import number_of_realisations
-
-# input_path = '../..'
-# ip=np.load(input_path+'/input_variables.py')
-# sys.path.append(input_path)
-# from input_variables import number_of_realisations
 
 path_to_surface_data='../Pre_processed_data'
 
@@ -51,34 +54,19 @@ reordered_R=np.asarray(solve_R(R_unique,R_values))
 min_r_index=np.where(reordered_R == reordered_R.min())
 
 ## path to H and scaling values
-path_to_H='../Find_H_and_int/H_data'
+path_to_H='../Find_H_and_int/'+selected_method
 
 ## scaling
-int_lower_params=pd.read_csv(path_to_H+'/int_lower_all.csv')
-int_upper_params=pd.read_csv(path_to_H+'/int_upper_all.csv')
-int_lower_params=int_lower_params['Values'].tolist()
-int_upper_params=int_upper_params['Values'].tolist()
-# 75th perc
-int_lower_params=int_lower_params[2:3][0]
-int_upper_params=int_upper_params[2:3][0]
+int_lower_params=np.load(path_to_H+'/Sp_lower.npy')
+int_upper_params=np.load(path_to_H+'/Sp_upper.npy')
 
-## Hurst
-H_lower_params=pd.read_csv(path_to_H+'/H_lower_all.csv')
-H_upper_params=pd.read_csv(path_to_H+'/H_upper_all.csv')
-H_lower_params=H_lower_params['Values'].tolist()
-H_upper_params=H_upper_params['Values'].tolist()
-# 75th perc
-H_lower_params=H_lower_params[2:3][0]
-H_upper_params=H_upper_params[2:3][0]
+# ## Hurst
+H_lower_params=np.load(path_to_H+'/H_lower.npy')
+H_upper_params=np.load(path_to_H+'/H_upper.npy')
 
-## anisotropy
-aniso_lower_params=pd.read_csv(path_to_H+'/aniso_lower_all.csv') 
-aniso_upper_params=pd.read_csv(path_to_H+'/aniso_upper_all.csv')
-aniso_lower_params=aniso_lower_params['Values'].tolist()
-aniso_upper_params=aniso_upper_params['Values'].tolist()
-## med
-aniso_lower_params=aniso_lower_params[0:1][0]
-aniso_upper_params=aniso_upper_params[0:1][0]
+# ## anisotropy
+aniso_lower_params=1
+aniso_upper_params=1 
 
 ## Generate surfaces and apertures
 seed=np.arange(1,number_of_realisations,1) #iterater
@@ -120,7 +108,10 @@ for i in range(0,len(seed)):
       upper_surf=makeFracSurf_updated(N=N,H=H_upper,anisotropy=aniso_upper,phase1=phase1,wavenumber_grid=K_c) #phase2=phase2
       # scaling parameters
       target_rms=average_intercept_upper 
-      rms_heights_upper_surf=calculate_scaling_gen_surf(upper,upper_surf) ## correct
+      if selected_method == 'calc_H_RMS_COR' or 'calc_H_RMS_COR_comb_profs':
+          rms_heights_upper_surf=calculate_scaling_gen_surf(upper,upper_surf) ## correct
+      else:
+          rms_heights_upper_surf=calculate_scaling_gen_surf_PSD(upper,upper_surf[0:N-1,0:N-1]) ## update for PSD
       # print (average_intercept_upper, rms_heights_upper_surf)
       # rms_heights_upper_surf=calculate_scaling(upper_surf) ## for testing
       upper_surf *= target_rms/rms_heights_upper_surf
@@ -131,8 +122,11 @@ for i in range(0,len(seed)):
       H_lower=H_lower_params 
       # make surface
       lower_surf=makeFracSurf_updated(N=N,H=H_lower,anisotropy=aniso_lower,phase1=phase2,wavenumber_grid=K_c)
-      target_rms=average_intercept_lower     
-      rms_heights_lower_surf=calculate_scaling_gen_surf(lower,lower_surf) ## correct
+      target_rms=average_intercept_lower 
+      if selected_method == 'calc_H_RMS_COR' or 'calc_H_RMS_COR_comb_profs':
+          rms_heights_lower_surf=calculate_scaling_gen_surf(lower,lower_surf) ## correct
+      else:
+          rms_heights_lower_surf=calculate_scaling_gen_surf_PSD(lower,lower_surf[0:N-1,0:N-1]) ## update for PSD
       # print (average_intercept_lower, rms_heights_lower_surf)
       # rms_heights_lower_surf=calculate_scaling(lower_surf) ## for testing
       lower_surf *= target_rms/rms_heights_lower_surf
@@ -154,7 +148,7 @@ for i in range(0,len(seed)):
           n_zero=n_zero[0].size
           percent_contact_data=(n_zero/aperture_data.size)*100
           print ('before,data',percent_contact_data)
-          shift=np.linspace(0.1,-1.3,1201)
+          shift=np.linspace(0.1,-1.4,1301)
           # A=np.zeros((N,N))
           ##A=np.zeros((2**N*2+1,2**N*2+1))
           for i in range(0,len(shift)):
@@ -176,9 +170,9 @@ for i in range(0,len(seed)):
 
       all_aps.append(aperture)#.flatten())
              
-np.save('gen_apertures.npy',all_aps)
-np.save('gen_upper_surf.npy',up_surf)
-np.save('gen_lower_surf.npy',low_surf)
+np.save('gen_apertures_'+str(selected_method)+'.npy',all_aps)
+np.save('gen_upper_surf_'+str(selected_method)+'.npy',up_surf)
+np.save('gen_lower_surf_'+str(selected_method)+'.npy',low_surf)
 
 
 # calculate_scaling_gen_surf = True
